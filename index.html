@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Projeto Aplicado de Estatística: consumo de carnes no Brasil (1990-2026), com imputação, descritiva, amostragem, probabilidade, inferência e modelos de previsão.">
+<meta name="author" content="Vitor Moroni e Geovani Nepomuceno">
+<title>Carne Suína no Brasil</title>
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: relatório em coluna única; cada seção é uma "célula" com texto, painel de controles e saída recalculada ao vivo */
+:root{
+  --bg:#f6f8fa; --surface:#ffffff; --sunken:#eef2f6; --line:#d9e0e8;
+  --ink:#10202f; --ink2:#44566a; --ink3:#6b7c8f;
+  --accent:#1f66bd; --accent-ink:#ffffff; --accent-soft:#e3eefb;
+  --s-sui:#2a78d6; --s-bov:#eb6834; --s-ovi:#1baf7a; --s-ave:#eda100;
+  --neutral:#8a97a6; --shade:rgba(120,140,160,.14); --grid:rgba(16,32,47,.09);
+  --pos:#c2410c; --neg:#1f66bd;
+  --f-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"Inter","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f151c; --surface:#18212b; --sunken:#121a23; --line:#2b3947;
+  --ink:#e9eff5; --ink2:#b3c0cd; --ink3:#8496a8;
+  --accent:#5b9eea; --accent-ink:#0b1420; --accent-soft:#1c2f45;
+  --s-sui:#3987e5; --s-bov:#d95926; --s-ovi:#199e70; --s-ave:#c98500;
+  --neutral:#7c8b9b; --shade:rgba(150,170,190,.12); --grid:rgba(233,239,245,.10);
+  --pos:#f08a4b; --neg:#5b9eea; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0f151c; --surface:#18212b; --sunken:#121a23; --line:#2b3947;
+  --ink:#e9eff5; --ink2:#b3c0cd; --ink3:#8496a8;
+  --accent:#5b9eea; --accent-ink:#0b1420; --accent-soft:#1c2f45;
+  --s-sui:#3987e5; --s-bov:#d95926; --s-ovi:#199e70; --s-ave:#c98500;
+  --neutral:#7c8b9b; --shade:rgba(150,170,190,.12); --grid:rgba(233,239,245,.10);
+  --pos:#f08a4b; --neg:#5b9eea; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(1.9rem,4.6vw,3rem);font-weight:700;letter-spacing:-.02em}
+h2{font-size:1.55rem;font-weight:600;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:68ch}
+.muted{color:var(--ink2)} .small{font-size:.875rem}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+header.top{padding-block:40px 28px}
+.eyebrow{font-size:.75rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+header.top .lede{font-size:1.1rem;color:var(--ink2);margin-top:14px}
+.byline{margin-top:14px;font-size:.9rem;color:var(--ink2)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;margin-top:26px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.fact{padding:14px 16px 14px 0}
+.fact b{display:block;font-family:var(--f-display);font-size:1.7rem;font-weight:600;font-variant-numeric:tabular-nums}
+.fact span{font-size:.85rem;color:var(--ink2)}
+.note{margin-top:20px;padding:12px 14px;background:var(--accent-soft);border-radius:6px;font-size:.9rem;max-width:none}
+
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px}
+nav.toc a{flex:none;font-size:.85rem;color:var(--ink2);text-decoration:none;padding:5px 10px;border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--sunken);color:var(--ink)}
+
+section{padding-block:44px 8px;scroll-margin-top:52px}
+section>.head{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.cell{background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--sunken);border-radius:8px 8px 0 0}
+.ctl{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--ink2);min-width:0}
+.ctl output{font-family:var(--f-mono);color:var(--ink);font-weight:500}
+input[type=range]{width:170px;max-width:100%;accent-color:var(--accent)}
+select{font:inherit;font-size:.9rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);max-width:100%}
+button{font:inherit;font-size:.875rem;font-weight:500;padding:7px 13px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink3)}
+button.run{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.run:hover{filter:brightness(1.08)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;color:var(--ink)}
+.chip input{accent-color:var(--accent);margin:0}
+.sw{width:10px;height:10px;border-radius:2px;flex:none}
+.out{padding:16px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.chart{position:relative;height:320px;min-width:0}
+.chart.sm{height:260px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:20px}
+.two>*{min-width:0}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.875rem}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--ink2);font-size:.78rem}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+tr.best td{font-weight:600;background:var(--accent-soft)}
+.bar{display:inline-block;height:8px;border-radius:0 4px 4px 0;background:var(--neutral);vertical-align:middle;margin-right:8px}
+tr.best .bar{background:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{border-left:3px solid var(--line);padding:2px 0 2px 12px}
+.kpi b{display:block;font-family:var(--f-mono);font-size:1.25rem;font-weight:500;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.8rem;color:var(--ink2)}
+.kpi.hl{border-left-color:var(--accent)}
+.read{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.read p{color:var(--ink2)} .read b{color:var(--ink)}
+details{border-top:1px solid var(--line)}
+summary{padding:10px 16px;font-size:.85rem;color:var(--ink2);cursor:pointer}
+pre{margin:0;padding:0 16px 16px;overflow-x:auto;font-family:var(--f-mono);font-size:.78rem;line-height:1.55;color:var(--ink)}
+.heat td,.heat th{text-align:center} .heat td:first-child{text-align:left}
+footer{padding-block:40px 56px;color:var(--ink3);font-size:.85rem;border-top:1px solid var(--line);margin-top:48px}
+ul.plain{margin:0;padding-left:20px;max-width:68ch;color:var(--ink2);display:flex;flex-direction:column;gap:8px}
+ul.plain b{color:var(--ink)}
+a{color:var(--accent)}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;font-size:.9rem;font-weight:500;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.prose{display:flex;flex-direction:column;gap:14px;max-width:820px}
+.prose h3{margin-top:14px}
+.prose ol{margin:0;padding-left:22px;color:var(--ink2);max-width:68ch;display:flex;flex-direction:column;gap:4px}
+.prose .note{margin-top:4px}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--sunken);padding:1px 5px;border-radius:4px}
+table.txt th,table.txt td{text-align:left;white-space:normal;font-family:var(--f-body);vertical-align:top}
+table.txt td:first-child{white-space:nowrap}
+@media (max-width:520px){ .chart{height:280px} input[type=range]{width:140px} }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Estatística Aplicada à Análise de Dados · UniSENAI SC · Projeto Aplicado</div>
+  <h1 style="margin-top:10px">O que explica e o que prevê o consumo de carne suína no Brasil?</h1>
+  <p class="lede">Análise do consumo per capita de carnes entre 1990 e 2026, com dados da OCDE-FAO. Cada seção refaz os cálculos do notebook no seu navegador: mude um controle e os números e gráficos são recalculados.</p>
+  <p class="byline">Vitor Moroni e Geovani Nepomuceno · Pós-Graduação em Ciência de Dados e Inteligência Artificial</p>
+  <div class="facts" id="facts"></div>
+  <div class="links">
+    <a class="btn primary" href="notebook.html">Ver o notebook completo</a>
+    <a class="btn" id="lnkColab" href="#" target="_blank" rel="noopener" hidden>Abrir no Google Colab</a>
+    <a class="btn" href="Estatistica_Aplicada_Consumo_Carnes_Brasil.ipynb" download>Baixar notebook (.ipynb)</a>
+    <a class="btn" href="meat_consumption_worldwide.csv" download>Baixar dados (.csv)</a>
+  </div>
+  <p class="note"><b>Como esta página roda os códigos.</b> O notebook foi escrito em Python. Para que a página funcione sem servidor, os mesmos cálculos foram reescritos em JavaScript e rodam no seu navegador a cada ajuste; o trecho Python correspondente fica no fim de cada seção, e o notebook completo, com todo o código e as saídas, está em <a href="notebook.html">notebook.html</a>. Sorteios aleatórios usam o gerador da página e podem diferir ligeiramente dos valores do notebook.</p>
+</div></header>
+
+<nav class="toc" aria-label="Seções"><div class="wrap">
+  <a href="#sobre">Projeto</a><a href="#evolucao">Evolução</a><a href="#imputacao">Dados ausentes</a><a href="#descritiva">Descritiva</a><a href="#amostragem">Amostragem</a><a href="#probabilidade">Probabilidade</a><a href="#inferencia">Inferência</a><a href="#modelos">Modelos</a><a href="#conclusoes">Conclusões</a><a href="notebook.html">Notebook completo</a>
+</div></nav>
+
+<main class="wrap">
+
+<section id="sobre">
+  <div class="head"><div class="eyebrow">Introdução</div><h2>O projeto</h2>
+  <p class="muted">O consumo per capita de carnes orienta o planejamento de abates, estoques e logística de frigoríficos, cooperativas e integradoras, como as do polo produtor de Santa Catarina. Entre as proteínas, a carne suína é a que mais mudou de patamar no Brasil nas últimas décadas.</p></div>
+  <div class="prose">
+    <h3>Pergunta central</h3>
+    <p>Como evoluiu o consumo de carne suína no Brasil, ele se relaciona com o consumo das outras carnes e é possível prevê-lo com um ano de antecedência?</p>
+    <h3>Objetivos específicos</h3>
+    <ol>
+      <li>Estruturar a série brasileira a partir de uma base mundial e tratar dados ausentes, comparando métodos de imputação.</li>
+      <li>Descrever o comportamento de cada tipo de carne (posição, dispersão, forma e evolução).</li>
+      <li>Situar o Brasil no contexto mundial por meio de amostragem estratificada.</li>
+      <li>Quantificar cenários com modelos de probabilidade (Normal e Binomial).</li>
+      <li>Testar hipóteses sobre a mudança de patamar do consumo e sobre a relação entre as carnes.</li>
+      <li>Comparar modelos de previsão e escolher o melhor com critérios objetivos.</li>
+    </ol>
+    <h3>Base de dados</h3>
+    <p>A base é a <i>Worldwide Meat Consumption</i> (Kaggle), derivada do relatório <b>OECD-FAO Agricultural Outlook</b>. O arquivo <code>meat_consumption_worldwide.csv</code> tem 13.760 linhas em formato longo, sem valores ausentes nem duplicidades.</p>
+    <div class="tw"><table class="txt">
+      <tr><th>Coluna original</th><th>Descrição</th></tr>
+      <tr><td><code>LOCATION</code></td><td>Código do país ou bloco (48 no total; <code>BRA</code> = Brasil)</td></tr>
+      <tr><td><code>SUBJECT</code></td><td>Tipo de carne: <code>BEEF</code> (bovina), <code>PIG</code> (suína), <code>POULTRY</code> (aves), <code>SHEEP</code> (ovina)</td></tr>
+      <tr><td><code>MEASURE</code></td><td>Unidade: <code>KG_CAP</code> (kg por habitante/ano) ou <code>THND_TONNE</code> (mil toneladas)</td></tr>
+      <tr><td><code>TIME</code></td><td>Ano, de 1990 a 2026</td></tr>
+      <tr><td><code>Value</code></td><td>Valor do consumo na unidade indicada</td></tr>
+    </table></div>
+    <p>Depois da preparação, a tabela de trabalho do Brasil tem uma linha por ano:</p>
+    <div class="tw"><table class="txt">
+      <tr><th>Variável</th><th>Descrição</th><th>Papel na análise</th></tr>
+      <tr><td><code>Ano</code></td><td>Ano de referência (1990–2026)</td><td>Índice temporal</td></tr>
+      <tr><td><code>Carne_Suina</code></td><td>Consumo de carne suína (kg/hab/ano)</td><td><b>Variável de interesse (alvo)</b></td></tr>
+      <tr><td><code>Carne_Bovina</code></td><td>Consumo de carne bovina (kg/hab/ano)</td><td>Explicativa</td></tr>
+      <tr><td><code>Aves</code></td><td>Consumo de carne de aves (kg/hab/ano)</td><td>Explicativa</td></tr>
+      <tr><td><code>Ovinos</code></td><td>Consumo de carne ovina (kg/hab/ano)</td><td>Apenas descritiva</td></tr>
+      <tr><td><code>Tipo</code></td><td>Observado (1990–2016) ou Projeção OCDE-FAO (2017–2026)</td><td>Separa histórico de projeção</td></tr>
+    </table></div>
+    <p class="note"><b>Anos finais.</b> A descrição da base informa que ela inclui projeções até 2026. Adotamos 2016 como último ano observado, pois o horizonte até 2026 corresponde à edição 2017–2026 do relatório. Todas as estatísticas, testes e modelos usam apenas 1990–2016; as projeções servem só como referência de comparação.</p>
+    <h3>Etapas da análise</h3>
+    <div class="tw"><table class="txt">
+      <tr><th>Etapa</th><th>O que é feito</th></tr>
+      <tr><td>Carregamento e preparação</td><td>Leitura, diagnóstico de qualidade, filtro do Brasil (só <code>KG_CAP</code>) e reorganização da tabela para uma linha por ano</td></tr>
+      <tr><td>Dados ausentes</td><td>Simulação de falhas de coleta e comparação de 6 métodos de imputação</td></tr>
+      <tr><td>Análise descritiva</td><td>Medidas-resumo, evolução temporal, distribuições e correlações</td></tr>
+      <tr><td>Amostragem</td><td>Amostragem aleatória simples x estratificada por país na base mundial</td></tr>
+      <tr><td>Probabilidade</td><td>Distribuições Normal e Binomial aplicadas ao consumo de carne suína</td></tr>
+      <tr><td>Inferência</td><td>Teste t de Welch, teste de correlação e intervalo de confiança</td></tr>
+      <tr><td>Modelagem</td><td>Comparação de 5 modelos de previsão e escolha do melhor</td></tr>
+      <tr><td>Conclusões</td><td>Respostas às perguntas do projeto, limitações e recomendações</td></tr>
+    </table></div>
+    <h3>Variáveis excluídas e motivos</h3>
+    <div class="tw"><table class="txt">
+      <tr><th>Variável ou recorte</th><th>Decisão</th><th>Motivo</th></tr>
+      <tr><td><code>MEASURE = THND_TONNE</code></td><td>Excluída</td><td>O volume total depende do tamanho da população; o objetivo é analisar o consumo por habitante</td></tr>
+      <tr><td><code>Ovinos</code></td><td>Só na descritiva</td><td>Consumo médio de 0,46 kg/hab/ano, menos de 1% do total de carnes; não é alternativa relevante à carne suína</td></tr>
+      <tr><td>Anos 2017–2026</td><td>Fora de testes e modelos</td><td>São projeções, não observações; ficam como referência</td></tr>
+      <tr><td>Agregados <code>WLD</code>, <code>OECD</code>, <code>BRICS</code>, <code>SSA</code></td><td>Fora da amostragem</td><td>Somam países já presentes na base e gerariam dupla contagem</td></tr>
+    </table></div>
+    <h3>Diferencial do projeto</h3>
+    <p>Os trabalhos públicos com esta base costumam comparar países ou rankings mundiais. Aqui o recorte é o mercado brasileiro de carne suína, com três elementos próprios: um experimento controlado de imputação, em que os valores apagados são conhecidos e o erro de cada método pode ser medido; a separação entre dados observados e projeções da OCDE-FAO, usadas como referência externa; e a comparação dos modelos com uma previsão ingênua, para verificar se eles de fato agregam informação.</p>
+  </div>
+</section>
+
+<section id="evolucao">
+  <div class="head"><div class="eyebrow">Seção 1 · Os dados</div><h2>Consumo per capita de carnes no Brasil</h2>
+  <p class="muted">A base <i>Worldwide Meat Consumption</i> (Kaggle, a partir do OECD-FAO Agricultural Outlook) traz o consumo em kg por habitante ao ano. De 2017 em diante os valores são projeções, por isso as estatísticas, os testes e os modelos usam apenas 1990–2016.</p></div>
+  <div class="cell">
+    <div class="controls"><div class="ctl">Séries exibidas<div class="chips" id="evoChips"></div></div></div>
+    <div class="out"><div class="chart"><canvas id="cEvo" role="img" aria-label="Linhas do consumo per capita por tipo de carne, 1990 a 2026"></canvas></div></div>
+  </div>
+  <div class="read"><p>O frango mais que triplicou (de 12,0 para 39,6 kg/hab entre 1990 e 2016) e ultrapassou a carne bovina no fim dos anos 1990. A <b>carne suína mais que dobrou</b>, de 5,4 para 11,5 kg/hab, com um salto de mais de 3 kg entre 1999 e 2000 que não se repete no restante da série e pode incluir revisão metodológica da fonte. Desmarque as outras séries para ver os ovinos, que ficam abaixo de 1 kg/hab.</p></div>
+</section>
+
+<section id="imputacao">
+  <div class="head"><div class="eyebrow">Seção 2 · Dados ausentes</div><h2>Qual método de imputação erra menos?</h2>
+  <p class="muted">A série brasileira é completa. Para avaliar os métodos, apagamos ao acaso parte dos valores de carne suína e bovina e comparamos o valor imputado com o verdadeiro. Como o resultado de um único sorteio depende da sorte, a comparação é repetida em 200 sorteios.</p></div>
+  <div class="cell">
+    <div class="controls">
+      <label class="ctl" for="impP">Valores apagados <output id="impPo"></output><input type="range" id="impP" min="5" max="30" step="1" value="10"></label>
+      <label class="ctl" for="impK">Vizinhos do KNN (k) <output id="impKo"></output><input type="range" id="impK" min="2" max="7" step="1" value="5"></label>
+      <label class="ctl" for="impM">Método no gráfico<select id="impM"></select></label>
+      <button id="impNb">Cenário do notebook</button><button class="run" id="impNew">▶ Novo sorteio</button>
+    </div>
+    <div class="out"><div class="two">
+      <div class="chart"><canvas id="cImp" role="img" aria-label="Série de carne suína com valores apagados e imputados"></canvas></div>
+      <div class="tw"><table id="tImp"></table><p class="small muted" id="impInfo" style="margin-top:8px"></p></div>
+    </div></div>
+    <details><summary>Código Python do notebook</summary><pre>mascara = np.random.rand(len(df_brasil), 2) &lt; 0.10
+df_falhas[['Carne_Suina', 'Carne_Bovina']] = df_falhas[['Carne_Suina', 'Carne_Bovina']].mask(mascara)
+
+def imp_interpolacao(df):
+    out = df.copy()
+    out[colunas_num] = df[colunas_num].interpolate(method='linear', limit_direction='both')
+    return out
+
+def imp_knn_temporal(df, k=5):
+    sc = StandardScaler(); z = sc.fit_transform(df[COLS_T])
+    z = KNNImputer(n_neighbors=k, weights='distance').fit_transform(z)
+    out = df.copy(); out[COLS_T] = sc.inverse_transform(z); return out</pre></details>
+  </div>
+  <div class="read"><p><b>A interpolação linear vence</b> na média dos 200 sorteios, e por isso foi o método adotado. O consumo anual muda devagar, então os melhores vizinhos de um ano são o ano anterior e o seguinte. O KNN procura anos parecidos no consumo das outras carnes, que têm pouca relação de curto prazo com a suína. A média é a pior opção: em uma série com tendência, ela coloca o mesmo valor em 1993 e em 2026. O notebook também testa o MICE, que ficou atrás do KNN.</p></div>
+</section>
+
+<section id="descritiva">
+  <div class="head"><div class="eyebrow">Seção 3 · Análise descritiva</div><h2>Posição, dispersão e relação entre as carnes</h2>
+  <p class="muted">Medidas-resumo de cada variável, distribuição dos valores anuais e correlação. A correlação pode ser vista entre os níveis de consumo ou entre as variações de um ano para o outro.</p></div>
+  <div class="cell">
+    <div class="controls">
+      <label class="ctl" for="dPer">Período<select id="dPer"><option value="obs">1990–2016 (observado)</option><option value="all">1990–2026 (com projeções)</option></select></label>
+      <label class="ctl" for="dVar">Histograma de<select id="dVar"></select></label>
+      <label class="ctl" for="dCor">Correlação entre<select id="dCor"><option value="niv">níveis de consumo</option><option value="var">variações anuais</option></select></label>
+    </div>
+    <div class="out">
+      <div class="tw"><table id="tDesc"></table></div>
+      <div class="two">
+        <div class="chart sm"><canvas id="cHist" role="img" aria-label="Histograma da variável selecionada"></canvas></div>
+        <div class="tw"><h3 id="corT" style="margin-bottom:10px"></h3><table id="tCor" class="heat"></table></div>
+      </div>
+    </div>
+    <details><summary>Código Python do notebook</summary><pre>desc = df_obs[colunas_num].describe().T
+desc['CV (%)'] = desc['std'] / desc['mean'] * 100
+desc['assimetria'] = df_obs[colunas_num].skew()
+
+corr_nivel = df_obs[colunas_num].corr()
+corr_var = df_obs[colunas_num].diff().dropna().corr()</pre></details>
+  </div>
+  <div class="read"><p>Nos níveis, as correlações são altas (0,93 entre suína e aves). Isso não indica substituição entre carnes: todas cresceram no mesmo período. Troque para <b>variações anuais</b> e a correlação entre suína e aves cai para perto de zero. Os ovinos ficam só na descritiva, pois representam menos de 1% do consumo total de carnes.</p></div>
+</section>
+
+<section id="amostragem">
+  <div class="head"><div class="eyebrow">Seção 4 · Amostragem</div><h2>Aleatória simples ou estratificada por país?</h2>
+  <p class="muted">Para situar o Brasil, estimamos a média mundial de consumo de carne suína a partir de uma amostra dos registros país–ano de 1990 a 2016. O consumo varia muito entre países e pouco dentro de cada país, situação em que estratificar por país mais ganha em precisão.</p></div>
+  <div class="cell">
+    <div class="controls">
+      <label class="ctl" for="sF">Fração amostrada <output id="sFo"></output><input type="range" id="sF" min="10" max="50" step="5" value="30"></label>
+      <button class="run" id="sNew">▶ Sortear de novo</button>
+    </div>
+    <div class="out">
+      <div class="kpis" id="sK"></div>
+      <div class="chart sm"><canvas id="cSamp" role="img" aria-label="Distribuição das médias amostrais em 1000 sorteios"></canvas></div>
+    </div>
+    <details><summary>Código Python do notebook</summary><pre>amostra_estrat = df_mundo.groupby('Pais', group_keys=False).sample(frac=0.30, random_state=42)
+amostra_aas = df_mundo.sample(n=len(amostra_estrat), random_state=42)
+
+for s in range(1000):
+    est_aas.append(df_mundo.sample(n=n, random_state=s).Carne_Suina.mean())
+    est_est.append(df_mundo.groupby('Pais', group_keys=False).sample(frac=0.30, random_state=s).Carne_Suina.mean())</pre></details>
+  </div>
+  <div class="read"><p>Os dois planos acertam na média (as duas curvas ficam centradas no valor populacional), mas a <b>estratificada erra bem menos</b>: com 30% dos registros, o erro padrão cai cerca de 74%. A média brasileira de 1990–2016 fica acima da média mundial, mas longe dos maiores consumidores, que passam de 30 kg/hab.</p></div>
+</section>
+
+<section id="probabilidade">
+  <div class="head"><div class="eyebrow">Seção 5 · Probabilidade</div><h2>Cenários com as distribuições Normal e Binomial</h2>
+  <p class="muted">A Normal responde qual a chance de o consumo passar de certo nível, ajustada ao patamar 2000–2016 (o teste de Shapiro-Wilk no notebook não rejeita a normalidade nesse período, p = 0,34). A Binomial responde em quantos anos de uma década o consumo cresce.</p></div>
+  <div class="two">
+    <div class="cell">
+      <div class="controls"><label class="ctl" for="pL">Limite de consumo <output id="pLo"></output><input type="range" id="pL" min="9" max="13.5" step="0.1" value="12"></label></div>
+      <div class="out"><div class="kpis" id="pK"></div><div class="chart sm"><canvas id="cNorm" role="img" aria-label="Curva Normal com a área acima do limite destacada"></canvas></div></div>
+      <details><summary>Código Python do notebook</summary><pre>mu_s, sd_s = suino_rec.mean(), suino_rec.std(ddof=1)
+p_acima = stats.norm.sf(12.0, mu_s, sd_s)</pre></details>
+    </div>
+    <div class="cell">
+      <div class="controls">
+        <label class="ctl" for="bN">Anos no horizonte <output id="bNo"></output><input type="range" id="bN" min="5" max="15" step="1" value="10"></label>
+        <label class="ctl" for="bK">Ao menos quantos de alta <output id="bKo"></output><input type="range" id="bK" min="1" max="10" step="1" value="7"></label>
+      </div>
+      <div class="out"><div class="kpis" id="bKp"></div><div class="chart sm"><canvas id="cBin" role="img" aria-label="Distribuição Binomial do número de anos de alta"></canvas></div></div>
+      <details><summary>Código Python do notebook</summary><pre>p_alta = (df_obs['Carne_Suina'].diff().dropna() > 0).mean()
+stats.binom.sf(6, 10, p_alta)    # P(Y >= 7)
+stats.binom.pmf(10, 10, p_alta)  # P(Y = 10)</pre></details>
+    </div>
+  </div>
+  <div class="read"><p>Superar 12 kg/hab seria raro <b>se o patamar de 2000–2016 se mantivesse</b>. A série ainda tem tendência de alta, e a projeção da OCDE-FAO passa de 12 kg já em 2018, ou seja, pressupõe que o patamar continua subindo. Na Binomial, crescer em todos os 10 anos tem chance pequena, e é exatamente esse o cenário da projeção oficial: ela descreve a tendência, não as oscilações ano a ano.</p></div>
+</section>
+
+<section id="inferencia">
+  <div class="head"><div class="eyebrow">Seção 6 · Inferência</div><h2>O patamar de consumo mudou? As carnes se substituem?</h2>
+  <p class="muted">Teste t de Welch para a diferença entre as médias de dois períodos (H0: médias iguais) e teste de correlação de Pearson (H0: correlação nula), ambos com 5% de significância. Mova o ano de corte para ver como o resultado do teste t responde.</p></div>
+  <div class="cell">
+    <div class="controls"><label class="ctl" for="iC">Segundo período começa em <output id="iCo"></output><input type="range" id="iC" min="1994" max="2012" step="1" value="2000"></label></div>
+    <div class="out">
+      <div class="kpis" id="iK"></div>
+      <div class="chart sm"><canvas id="cInf" role="img" aria-label="Consumo de carne suína com a média de cada período"></canvas></div>
+      <div class="tw"><table id="tCorT"></table></div>
+    </div>
+    <details><summary>Código Python do notebook</summary><pre>t = stats.ttest_ind(g00, g90, equal_var=False)   # teste t de Welch
+ic = t.confidence_interval(0.95)
+
+r_v, p_v = stats.pearsonr(var['Carne_Suina'], var['Aves'])  # variações anuais</pre></details>
+  </div>
+  <div class="read"><p>Com o corte em 2000, o consumo médio passa de 6,5 para 10,4 kg/hab e a hipótese de médias iguais é rejeitada. Anos consecutivos não são independentes, o que tende a deixar o valor-p menor do que deveria, então a força da evidência deve ser lida com cautela. Nas variações anuais, <b>nenhuma correlação é significativa</b>: não há evidência de que o brasileiro troque carne suína por frango ou carne bovina de um ano para o outro.</p></div>
+</section>
+
+<section id="modelos">
+  <div class="head"><div class="eyebrow">Seção 7 · Modelagem</div><h2>Dá para prever o consumo do ano seguinte?</h2>
+  <p class="muted">Cinco modelos são comparados pela previsão 1 ano à frente com origem móvel: para cada ano-alvo, o modelo é ajustado só com os anos anteriores. O critério principal é o RMSE dessas previsões, e um modelo só é útil se errar menos que repetir o valor do ano anterior (M0).</p></div>
+  <div class="cell">
+    <div class="controls">
+      <label class="ctl" for="mS">Primeiro ano previsto <output id="mSo"></output><input type="range" id="mS" min="2001" max="2012" step="1" value="2005"></label>
+      <div class="ctl">Modelos no gráfico<div class="chips" id="mChips"></div></div>
+    </div>
+    <div class="out">
+      <div class="two">
+        <div class="chart"><canvas id="cMod" role="img" aria-label="Consumo real e previsões um ano à frente de cada modelo"></canvas></div>
+        <div class="tw"><table id="tMod"></table></div>
+      </div>
+      <div class="kpis" id="mK"></div>
+    </div>
+    <details><summary>Código Python do notebook</summary><pre>for ano in range(2005, 2017):                       # origem móvel
+    tr, te = df_mod[df_mod['Ano'] &lt; ano], df_mod[df_mod['Ano'] == ano]
+    for nome, v in MODELOS.items():
+        m = sm.OLS(tr['Carne_Suina'], sm.add_constant(tr[v])).fit()
+        prev_movel[nome].append(m.predict(sm.add_constant(te[v], has_constant='add')))</pre></details>
+  </div>
+  <div class="read"><p><b>Nenhuma regressão supera o modelo ingênuo.</b> O melhor modelo de previsão (M3, que usa a carne suína do ano anterior) empata com repetir o último valor. O M2 usa bovina e aves do mesmo ano, então nem é uma previsão de fato, e ainda erra cerca do dobro. A previsibilidade vem da estabilidade da série, não da sofisticação do modelo.</p></div>
+</section>
+
+<section id="conclusoes">
+  <div class="head"><div class="eyebrow">Seção 8 · Conclusões</div><h2>Respostas, recomendações e limites</h2></div>
+  <ul class="plain">
+    <li><b>Evolução.</b> O consumo de carne suína mais que dobrou entre 1990 e 2016. A mudança de patamar entre a década de 1990 e o período 2000–2016 é estatisticamente significativa, com aumento médio entre 3,2 e 4,6 kg/hab (IC de 95%).</li>
+    <li><b>Relação com outras carnes.</b> No longo prazo todas cresceram juntas. No curto prazo não há evidência de substituição.</li>
+    <li><b>Previsão.</b> É possível prever o ano seguinte com erro típico de cerca de 0,4 kg/hab, mas nenhum modelo testado supera a regra de repetir o último valor.</li>
+    <li><b>Para o planejamento do setor.</b> Usar o último ano como base, com margem de cerca de ±0,4 kg/hab em anos normais, e esperar algo como 7 anos de alta em cada 10. Choques maiores, como o de 2000, acontecem.</li>
+    <li><b>Limitações.</b> Série curta (27 anos observados), sem preços nem renda, com dependência entre anos vizinhos. As falhas de dados foram simuladas para avaliar os métodos, e o corte entre observado e projeção em 2016 foi inferido da descrição da base.</li>
+  </ul>
+</section>
+</main>
+
+<footer><div class="wrap">Fonte: OECD/FAO, <i>OECD-FAO Agricultural Outlook</i>, indicador Meat consumption, via Kaggle (Worldwide Meat Consumption). Página baseada no notebook do Projeto Aplicado de Vitor Moroni e Geovani Nepomuceno.</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script>
+const D = {"anos":[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"bov":[19.2761,19.3606,18.834,18.9707,21.1282,23.1016,25.4176,23.8063,23.6657,23.3326,24.4988,23.8585,24.6546,24.596,24.6017,23.7807,23.4344,25.0927,25.2428,26.4976,25.0504,24.5249,24.7136,26.2478,26.4644,25.6052,25.6607,26.4675,26.4172,26.1133,26.0026,26.136,26.2137,26.1611,26.032,26.0203,26.1729],"sui":[5.3939,5.5803,5.7328,5.857,6.2737,6.7289,7.2915,6.8272,7.2228,7.5413,10.7358,10.8449,10.3085,9.3563,8.8619,8.6327,9.9153,9.7172,10.0404,10.2796,10.6346,11.254,11.2699,11.1761,11.6892,11.2256,11.5283,11.8451,12.1159,12.4738,12.6597,12.8203,13.0036,13.3177,13.412,13.4559,13.5768],"ave":[12.0359,13.2709,14.1663,15.2031,16.1713,19.5609,18.5456,21.2558,22.3236,24.5926,25.8033,27.4521,29.2741,28.0138,28.9234,31.2874,31.5568,33.8899,35.708,35.2832,39.2693,40.7245,39.9074,37.8015,37.9548,39.3632,39.6,39.9046,39.8959,40.0484,40.0111,39.83,39.8808,39.8793,39.9516,39.973,39.8231],"ovi":[0.6687,0.6666,0.6625,0.6761,0.6489,0.6936,0.5407,0.5626,0.3907,0.3908,0.4067,0.3743,0.3484,0.3444,0.3738,0.3759,0.3878,0.4143,0.3871,0.4117,0.4012,0.3949,0.4006,0.4075,0.4076,0.3883,0.3891,0.3863,0.3836,0.3811,0.3786,0.3763,0.374,0.3717,0.3697,0.3679,0.3619],"maskSui":[3,5,16,21,28,29,34,36],"maskBov":[14,18],"mundo":{"ARG":[[1990,3.661],[1991,3.599],[1992,4.47],[1993,4.831],[1994,4.815],[1995,5.062],[1996,4.865],[1997,4.723],[1998,5.448],[1999,6.118],[2000,5.959],[2001,4.758],[2002,4.42],[2003,3.928],[2004,4.229],[2005,4.794],[2006,5.89],[2007,6.001],[2008,5.888],[2009,6.365],[2010,6.275],[2011,6.529],[2012,6.582],[2013,7.816],[2014,7.962],[2015,8.505],[2016,8.795]],"AUS":[[1991,14.396],[1992,15.129],[1993,14.871],[1994,15.597],[1995,15.505],[1996,14.46],[1997,14.715],[1998,15.166],[1999,15.069],[2000,15.206],[2001,15.208],[2002,15.963],[2003,17.415],[2004,17.703],[2005,18.62],[2006,17.959],[2007,19.68],[2008,19.282],[2009,19.869],[2010,20.157],[2011,19.62],[2012,20.529],[2013,19.987],[2014,19.987],[2015,21.737],[2016,20.496]],"BGD":[[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.0],[2000,0.0],[2001,0.0],[2002,0.0],[2003,0.0],[2004,0.0],[2005,0.0],[2006,0.0],[2007,0.0],[2008,0.0],[2009,0.0],[2010,0.0],[2011,0.0],[2012,0.0],[2013,0.0],[2014,0.0],[2015,0.0],[2016,0.0]],"BRA":[[1990,5.394],[1991,5.58],[1992,5.733],[1993,5.857],[1994,6.274],[1995,6.729],[1996,7.291],[1997,6.827],[1998,7.223],[1999,7.541],[2000,10.736],[2001,10.845],[2002,10.309],[2003,9.356],[2004,8.862],[2005,8.633],[2006,9.915],[2007,9.717],[2008,10.04],[2009,10.28],[2010,10.635],[2011,11.254],[2012,11.27],[2013,11.176],[2014,11.689],[2015,11.226],[2016,11.528]],"CAN":[[1990,20.506],[1991,20.276],[1992,22.24],[1993,21.648],[1994,22.264],[1995,21.793],[1996,20.386],[1997,19.949],[1998,22.503],[1999,23.578],[2000,22.494],[2001,22.723],[2002,21.874],[2003,19.743],[2004,20.938],[2005,18.096],[2006,18.399],[2007,19.664],[2008,18.687],[2009,18.481],[2010,17.295],[2011,16.767],[2012,17.462],[2013,16.375],[2014,16.173],[2015,17.736],[2016,16.947]],"CHL":[[1990,7.182],[1991,7.068],[1992,7.589],[1993,8.095],[1994,8.755],[1995,9.397],[1996,9.915],[1997,10.582],[1998,11.656],[1999,12.392],[2000,12.7],[2001,13.712],[2002,13.498],[2003,14.282],[2004,13.43],[2005,13.907],[2006,16.29],[2007,16.772],[2008,18.134],[2009,17.241],[2010,17.649],[2011,18.592],[2012,19.513],[2013,19.571],[2014,17.872],[2015,17.427],[2016,18.67]],"CHN":[[1990,15.247],[1991,16.129],[1992,17.212],[1993,18.397],[1994,19.9],[1995,20.152],[1996,19.758],[1997,22.374],[1998,24.023],[1999,23.992],[2000,24.776],[2001,25.378],[2002,26.241],[2003,25.46],[2004,25.8],[2005,26.934],[2006,27.422],[2007,25.269],[2008,27.359],[2009,28.558],[2010,29.738],[2011,28.879],[2012,30.332],[2013,31.485],[2014,32.297],[2015,31.44],[2016,30.827]],"COL":[[1990,3.027],[1991,2.971],[1992,2.983],[1993,2.909],[1994,2.881],[1995,2.896],[1996,2.726],[1997,2.18],[1998,1.63],[1999,2.214],[2000,2.124],[2001,1.96],[2002,2.12],[2003,2.35],[2004,2.41],[2005,2.361],[2006,2.705],[2007,3.252],[2008,3.162],[2009,3.229],[2010,3.533],[2011,3.983],[2012,4.575],[2013,4.992],[2014,4.945],[2015,4.933],[2016,4.697]],"DZA":[[1990,0.09],[1991,0.088],[1992,0.086],[1993,0.084],[1994,0.083],[1995,0.081],[1996,0.08],[1997,0.078],[1998,0.077],[1999,0.076],[2000,0.075],[2001,0.074],[2002,0.073],[2003,0.072],[2004,0.071],[2005,0.07],[2006,0.069],[2007,0.068],[2008,0.067],[2009,0.066],[2010,0.065],[2011,0.064],[2012,0.063],[2013,0.061],[2014,0.06],[2015,0.059],[2016,0.058]],"EGY":[[1990,0.028],[1991,0.027],[1992,0.04],[1993,0.039],[1994,0.038],[1995,0.037],[1996,0.037],[1997,0.036],[1998,0.095],[1999,0.035],[2000,0.034],[2001,0.034],[2002,0.033],[2003,0.022],[2004,0.021],[2005,0.021],[2006,0.02],[2007,0.03],[2008,0.02],[2009,0.01],[2010,0.19],[2011,0.168],[2012,0.173],[2013,0.169],[2014,0.174],[2015,0.153],[2016,0.167]],"ETH":[[1993,0.015],[1994,0.014],[1995,0.014],[1996,0.013],[1997,0.013],[1998,0.012],[1999,0.012],[2000,0.012],[2001,0.011],[2002,0.011],[2003,0.022],[2004,0.021],[2005,0.02],[2006,0.02],[2007,0.019],[2008,0.019],[2009,0.018],[2010,0.018],[2011,0.017],[2012,0.017],[2013,0.016],[2014,0.016],[2015,0.016],[2016,0.015]],"EU28":[[1990,33.791],[1991,32.57],[1992,32.446],[1993,32.611],[1994,32.769],[1995,32.723],[1996,32.583],[1997,32.53],[1998,34.738],[1999,33.523],[2000,32.74],[2001,33.181],[2002,33.586],[2003,33.363],[2004,32.73],[2005,32.74],[2006,32.939],[2007,33.787],[2008,33.208],[2009,32.004],[2010,32.469],[2011,32.346],[2012,31.568],[2013,31.212],[2014,31.853],[2015,32.714],[2016,32.258]],"GHA":[[1990,0.693],[1991,0.674],[1992,0.555],[1993,0.539],[1994,0.525],[1995,0.558],[1996,0.681],[1997,0.71],[1998,0.608],[1999,0.594],[2000,0.539],[2001,0.485],[2002,0.512],[2003,0.653],[2004,0.374],[2005,0.401],[2006,0.569],[2007,0.762],[2008,0.776],[2009,0.757],[2010,0.706],[2011,0.782],[2012,0.794],[2013,0.894],[2014,0.757],[2015,0.797],[2016,0.807]],"HTI":[[1990,1.538],[1991,1.723],[1992,1.901],[1993,2.072],[1994,1.931],[1995,2.593],[1996,2.546],[1997,2.596],[1998,2.739],[1999,2.784],[2000,2.828],[2001,3.23],[2002,3.355],[2003,3.476],[2004,3.165],[2005,3.284],[2006,3.15],[2007,3.346],[2008,3.295],[2009,3.087],[2010,3.042],[2011,3.152],[2012,3.336],[2013,3.29],[2014,3.32],[2015,3.204],[2016,3.164]],"IDN":[[1990,2.347],[1991,2.429],[1992,2.434],[1993,2.546],[1994,2.658],[1995,2.269],[1996,2.345],[1997,2.438],[1998,2.362],[1999,2.056],[2000,1.556],[2001,1.724],[2002,1.669],[2003,1.724],[2004,1.691],[2005,1.906],[2006,2.014],[2007,2.011],[2008,2.114],[2009,2.123],[2010,2.247],[2011,2.3],[2012,2.296],[2013,2.31],[2014,2.29],[2015,2.283],[2016,2.263]],"IND":[[1990,0.37],[1991,0.375],[1992,0.382],[1993,0.378],[1994,0.373],[1995,0.369],[1996,0.444],[1997,0.363],[1998,0.355],[1999,0.35],[2000,0.345],[2001,0.339],[2002,0.335],[2003,0.331],[2004,0.307],[2005,0.29],[2006,0.271],[2007,0.255],[2008,0.248],[2009,0.243],[2010,0.234],[2011,0.228],[2012,0.221],[2013,0.216],[2014,0.214],[2015,0.213],[2016,0.21]],"IRN":[[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.0],[2000,0.0],[2001,0.0],[2002,0.0],[2003,0.0],[2004,0.0],[2005,0.0],[2006,0.0],[2007,0.0],[2008,0.0],[2009,0.0],[2010,0.011],[2011,0.0],[2012,0.01],[2013,0.0],[2014,0.0],[2015,0.0],[2016,0.0]],"ISR":[[1990,1.56],[1991,1.512],[1992,1.46],[1993,1.408],[1994,1.359],[1995,1.609],[1996,1.422],[1997,1.663],[1998,1.624],[1999,1.192],[2000,1.946],[2001,2.036],[2002,2.0],[2003,2.088],[2004,2.17],[2005,2.244],[2006,2.079],[2007,2.029],[2008,2.089],[2009,2.148],[2010,1.997],[2011,1.856],[2012,1.926],[2013,1.596],[2014,1.572],[2015,1.644],[2016,1.619]],"JPN":[[1990,13.219],[1991,13.239],[1992,13.233],[1993,13.114],[1994,13.18],[1995,13.226],[1996,13.88],[1997,12.88],[1998,12.772],[1999,13.054],[2000,13.525],[2001,13.848],[2002,14.522],[2003,14.284],[2004,15.222],[2005,15.11],[2006,14.137],[2007,14.401],[2008,14.648],[2009,14.294],[2010,14.486],[2011,14.741],[2012,14.662],[2013,14.641],[2014,14.837],[2015,15.052],[2016,15.353]],"KAZ":[[1992,10.49],[1993,9.38],[1994,7.547],[1995,5.289],[1996,5.364],[1997,4.287],[1998,4.248],[1999,5.076],[2000,7.249],[2001,9.709],[2002,10.081],[2003,9.944],[2004,10.506],[2005,10.601],[2006,10.648],[2007,10.842],[2008,11.86],[2009,11.677],[2010,10.808],[2011,10.601],[2012,5.518],[2013,5.337],[2014,4.984],[2015,4.691],[2016,4.587]],"KOR":[[1991,9.93],[1992,13.366],[1993,13.499],[1994,13.984],[1995,14.586],[1996,15.629],[1997,15.433],[1998,15.224],[1999,17.5],[2000,16.358],[2001,16.995],[2002,17.445],[2003,21.422],[2004,19.78],[2005,19.285],[2006,23.171],[2007,24.368],[2008,24.521],[2009,23.732],[2010,24.533],[2011,23.579],[2012,22.767],[2013,25.569],[2014,27.135],[2015,28.397],[2016,28.281]],"MEX":[[1990,7.196],[1991,7.729],[1992,7.653],[1993,7.445],[1994,7.988],[1995,7.809],[1996,7.522],[1997,7.73],[1998,8.157],[1999,8.344],[2000,8.877],[2001,9.06],[2002,9.339],[2003,9.633],[2004,9.88],[2005,9.735],[2006,9.681],[2007,9.766],[2008,10.037],[2009,10.72],[2010,10.634],[2011,10.163],[2012,10.754],[2013,11.181],[2014,11.208],[2015,11.963],[2016,11.83]],"MOZ":[[1990,0.7],[1991,0.682],[1992,0.659],[1993,0.633],[1994,0.609],[1995,0.588],[1996,0.57],[1997,0.555],[1998,0.54],[1999,0.527],[2000,5.21],[2001,4.939],[2002,4.636],[2003,3.875],[2004,4.105],[2005,4.357],[2006,3.086],[2007,3.419],[2008,3.087],[2009,3.133],[2010,3.175],[2011,3.43],[2012,3.789],[2013,3.949],[2014,3.84],[2015,3.847],[2016,3.825]],"MYS":[[1990,9.98],[1991,9.88],[1992,10.397],[1993,10.571],[1994,11.117],[1995,10.801],[1996,10.272],[1997,10.122],[1998,9.315],[1999,5.791],[2000,5.762],[2001,6.587],[2002,6.745],[2003,6.335],[2004,6.374],[2005,6.168],[2006,6.534],[2007,5.894],[2008,5.678],[2009,5.837],[2010,6.851],[2011,6.661],[2012,6.423],[2013,6.327],[2014,6.313],[2015,6.429],[2016,6.366]],"NGA":[[1990,0.873],[1991,0.851],[1992,0.868],[1993,0.885],[1994,0.9],[1995,0.957],[1996,0.968],[1997,0.979],[1998,0.981],[1999,1.015],[2000,1.003],[2001,1.145],[2002,1.165],[2003,1.053],[2004,1.067],[2005,1.078],[2006,1.094],[2007,1.108],[2008,1.125],[2009,1.136],[2010,1.145],[2011,1.162],[2012,1.159],[2013,1.151],[2014,1.125],[2015,1.104],[2016,1.085]],"NZL":[[1990,10.974],[1991,10.556],[1992,10.97],[1993,11.594],[1994,13.054],[1995,12.425],[1996,12.508],[1997,11.861],[1998,12.509],[1999,13.39],[2000,13.385],[2001,12.552],[2002,12.964],[2003,13.79],[2004,14.853],[2005,15.041],[2006,16.005],[2007,16.064],[2008,16.039],[2009,15.892],[2010,14.813],[2011,15.78],[2012,16.228],[2013,16.089],[2014,16.63],[2015,18.128],[2016,17.811]],"PAK":[[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.0],[2000,0.0],[2001,0.0],[2002,0.0],[2003,0.0],[2004,0.0],[2005,0.0],[2006,0.0],[2007,0.0],[2008,0.0],[2009,0.0],[2010,0.0],[2011,0.0],[2012,0.0],[2013,0.0],[2014,0.0],[2015,0.0],[2016,0.0]],"PER":[[1990,2.359],[1991,2.415],[1992,2.504],[1993,2.557],[1994,2.576],[1995,2.596],[1996,2.649],[1997,2.733],[1998,2.229],[1999,2.044],[2000,2.167],[2001,2.525],[2002,2.727],[2003,2.693],[2004,2.831],[2005,2.938],[2006,3.07],[2007,3.226],[2008,3.186],[2009,3.147],[2010,3.213],[2011,3.171],[2012,3.285],[2013,3.42],[2014,3.349],[2015,3.331],[2016,3.265]],"PHL":[[1990,8.625],[1991,8.622],[1992,7.898],[1993,8.554],[1994,8.653],[1995,9.092],[1996,11.388],[1997,11.725],[1998,11.963],[1999,12.403],[2000,12.511],[2001,12.728],[2002,13.154],[2003,13.218],[2004,12.798],[2005,13.012],[2006,14.132],[2007,14.379],[2008,14.236],[2009,14.342],[2010,14.537],[2011,14.32],[2012,14.2],[2013,14.389],[2014,14.296],[2015,14.02],[2016,14.067]],"PRY":[[1990,21.843],[1991,21.83],[1992,22.171],[1993,21.81],[1994,21.465],[1995,21.299],[1996,18.576],[1997,18.481],[1998,18.391],[1999,18.161],[2000,16.769],[2001,17.024],[2002,12.744],[2003,21.281],[2004,20.103],[2005,20.323],[2006,20.551],[2007,19.349],[2008,18.574],[2009,18.329],[2010,20.223],[2011,20.573],[2012,20.786],[2013,21.232],[2014,21.189],[2015,20.912],[2016,20.876]],"RUS":[[1993,14.672],[1994,13.21],[1995,12.507],[1996,11.673],[1997,11.826],[1998,11.733],[1999,10.715],[2000,9.492],[2001,10.142],[2002,11.963],[2003,11.378],[2004,11.757],[2005,12.936],[2006,14.009],[2007,15.378],[2008,18.081],[2009,17.421],[2010,17.759],[2011,19.332],[2012,19.586],[2013,20.364],[2014,19.031],[2015,19.048],[2016,20.0]],"SAU":[[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.0],[2000,0.073],[2001,0.106],[2002,0.103],[2003,0.1],[2004,0.097],[2005,0.158],[2006,0.123],[2007,0.15],[2008,0.0],[2009,0.0],[2010,0.167],[2011,0.244],[2012,0.238],[2013,0.232],[2014,0.253],[2015,0.247],[2016,0.243]],"SDN":[[1990,0.0],[1991,0.0],[1992,0.0],[1993,0.0],[1994,0.0],[1995,0.0],[1996,0.0],[1997,0.0],[1998,0.0],[1999,0.0],[2000,0.0],[2001,0.0],[2002,0.0],[2003,0.0],[2004,0.0],[2005,0.0],[2006,0.0],[2007,0.0],[2008,0.0],[2009,0.0],[2010,0.0],[2011,0.0],[2012,0.0],[2013,0.0],[2014,0.0],[2015,0.0],[2016,0.0]],"THA":[[1990,4.632],[1991,5.452],[1992,5.834],[1993,6.134],[1994,6.482],[1995,6.396],[1996,6.63],[1997,6.828],[1998,5.909],[1999,5.664],[2000,8.522],[2001,8.462],[2002,9.377],[2003,10.265],[2004,10.292],[2005,10.457],[2006,11.492],[2007,11.638],[2008,10.329],[2009,10.021],[2010,10.28],[2011,10.026],[2012,10.731],[2013,10.882],[2014,10.999],[2015,10.995],[2016,11.0]],"TUR":[[1990,0.101],[1991,0.028],[1992,0.028],[1993,0.028],[1994,0.027],[1995,0.08],[1996,0.013],[1997,0.013],[1998,0.051],[1999,0.05],[2000,0.037],[2001,0.012],[2002,0.012],[2003,0.047],[2004,0.058],[2005,0.023],[2006,0.011],[2007,0.0],[2008,0.0],[2009,0.0],[2010,0.0],[2011,0.0],[2012,0.01],[2013,0.01],[2014,0.03],[2015,0.079],[2016,0.088]],"TZA":[[1990,0.276],[1991,0.267],[1992,0.258],[1993,0.25],[1994,0.242],[1995,0.261],[1996,0.254],[1997,0.272],[1998,0.265],[1999,0.282],[2000,0.298],[2001,0.291],[2002,0.283],[2003,0.275],[2004,0.308],[2005,0.299],[2006,0.271],[2007,0.263],[2008,0.273],[2009,0.282],[2010,0.273],[2011,0.265],[2012,0.257],[2013,0.233],[2014,0.241],[2015,0.248],[2016,0.24]],"UKR":[[1992,17.754],[1993,15.351],[1994,13.139],[1995,12.357],[1996,12.158],[1997,10.915],[1998,10.635],[1999,10.115],[2000,11.025],[2001,9.558],[2002,9.805],[2003,10.872],[2004,9.914],[2005,9.068],[2006,9.812],[2007,11.974],[2008,13.557],[2009,11.692],[2010,13.089],[2011,13.755],[2012,16.092],[2013,16.147],[2014,13.762],[2015,12.303],[2016,12.41]],"URY":[[1990,5.518],[1991,5.479],[1992,5.686],[1993,6.136],[1994,6.334],[1995,6.047],[1996,6.004],[1997,6.438],[1998,7.345],[1999,8.249],[2000,7.75],[2001,7.736],[2002,6.329],[2003,6.333],[2004,6.57],[2005,6.567],[2006,6.557],[2007,7.941],[2008,7.914],[2009,7.422],[2010,8.321],[2011,10.137],[2012,11.482],[2013,13.046],[2014,13.002],[2015,13.865],[2016,14.947]],"USA":[[1990,22.431],[1991,22.721],[1992,23.974],[1993,23.656],[1994,23.957],[1995,23.608],[1996,22.05],[1997,21.809],[1998,23.44],[1999,23.973],[2000,23.316],[2001,22.892],[2002,23.483],[2003,23.629],[2004,23.428],[2005,22.836],[2006,22.552],[2007,23.184],[2008,22.58],[2009,22.845],[2010,21.79],[2011,20.806],[2012,20.835],[2013,21.359],[2014,21.121],[2015,22.644],[2016,22.758]],"VNM":[[1990,8.153],[1991,7.736],[1992,8.86],[1993,9.223],[1994,9.971],[1995,10.383],[1996,10.693],[1997,10.966],[1998,11.542],[1999,12.27],[2000,12.97],[2001,14.086],[2002,15.616],[2003,16.848],[2004,18.49],[2005,21.074],[2006,23.24],[2007,24.317],[2008,25.213],[2009,27.276],[2010,26.863],[2011,27.228],[2012,27.527],[2013,28.544],[2014,29.386],[2015,28.722],[2016,28.881]],"ZAF":[[1990,2.777],[1991,2.338],[1992,2.604],[1993,2.402],[1994,2.365],[1995,2.598],[1996,2.495],[1997,2.362],[1998,2.219],[1999,2.345],[2000,1.998],[2001,2.036],[2002,1.989],[2003,2.607],[2004,2.831],[2005,2.613],[2006,2.832],[2007,3.987],[2008,4.895],[2009,5.262],[2010,3.536],[2011,3.614],[2012,3.617],[2013,3.505],[2014,3.252],[2015,3.607],[2016,3.448]],"ZMB":[[1990,0.862],[1991,0.933],[1992,0.818],[1993,0.887],[1994,0.865],[1995,0.843],[1996,0.821],[1997,0.799],[1998,0.777],[1999,0.832],[2000,0.737],[2001,0.79],[2002,0.63],[2003,0.614],[2004,0.599],[2005,0.648],[2006,0.819],[2007,1.102],[2008,1.368],[2009,1.328],[2010,1.289],[2011,1.414],[2012,2.532],[2013,1.791],[2014,1.637],[2015,1.54],[2016,1.493]]}};
+const A = D.anos, NT = A.length, OBS = 27;
+const KEYS = ['sui','bov','ovi','ave'];
+const NOME = {sui:'Carne suína', bov:'Carne bovina', ave:'Aves', ovi:'Ovinos'};
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const f = (v,d=2) => (v==null||!isFinite(v)) ? '–' : v.toFixed(d).replace('.',',');
+const pct = (v,d=1) => f(v*100,d)+'%';
+const pval = p => p < 1e-4 ? p.toExponential(1).replace('.',',').replace('e','×10^') : f(p,4);
+
+/* ---------- estatística ---------- */
+const sum = a => a.reduce((s,v)=>s+v,0), mean = a => sum(a)/a.length;
+const variance = (a,dd=1) => { const m=mean(a); return sum(a.map(v=>(v-m)**2))/(a.length-dd); };
+const sd = (a,dd=1) => Math.sqrt(variance(a,dd));
+const quant = (a,q) => { const s=[...a].sort((x,y)=>x-y), p=(s.length-1)*q, i=Math.floor(p); return s[i]+(s[Math.min(i+1,s.length-1)]-s[i])*(p-i); };
+const skew = a => { const n=a.length,m=mean(a),s=sd(a); return n/((n-1)*(n-2))*sum(a.map(v=>((v-m)/s)**3)); };
+const diff = a => a.slice(1).map((v,i)=>v-a[i]);
+const corr = (x,y) => { const mx=mean(x),my=mean(y); let a=0,b=0,c=0; x.forEach((v,i)=>{a+=(v-mx)*(y[i]-my);b+=(v-mx)**2;c+=(y[i]-my)**2}); return a/Math.sqrt(b*c); };
+const rmse = e => Math.sqrt(mean(e.map(v=>v*v))), mae = e => mean(e.map(Math.abs));
+function lgamma(x){ const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5]; let y=x,t=x+5.5; t-=(x+.5)*Math.log(t); let s=1.000000000190015; for(const k of c) s+=k/++y; return -t+Math.log(2.5066282746310005*s/x); }
+function betacf(a,b,x){ let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap; if(Math.abs(d)<1e-30)d=1e-30; d=1/d; let h=d;
+  for(let m=1;m<=300;m++){ const m2=2*m; let aa=m*(b-m)*x/((qam+m2)*(a+m2)); d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30; c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30; d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2)); d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30; c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<3e-12)break; } return h; }
+function ibeta(a,b,x){ if(x<=0)return 0; if(x>=1)return 1; const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x)); return x<(a+1)/(a+b+2) ? bt*betacf(a,b,x)/a : 1-bt*betacf(b,a,1-x)/b; }
+const tP2 = (t,df) => ibeta(df/2,.5,df/(df+t*t));               // valor-p bilateral
+function tInv(p,df){ let lo=0,hi=60; for(let i=0;i<80;i++){ const m=(lo+hi)/2; (1-tP2(m,df)/2 < p) ? lo=m : hi=m; } return (lo+hi)/2; }
+function erf(x){ const s=x<0?-1:1; x=Math.abs(x); const t=1/(1+.3275911*x); return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x)); }
+const normCdf = (x,m,s) => .5*(1+erf((x-m)/(s*Math.SQRT2)));
+const normPdf = (x,m,s) => Math.exp(-.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI));
+const binom = (k,n,p) => Math.exp(lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p));
+function rng(seed){ let a=seed>>>0; return () => { a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function inv(M){ const n=M.length, a=M.map((r,i)=>[...r,...r.map((_,j)=>i===j?1:0)]);
+  for(let i=0;i<n;i++){ let p=i; for(let r=i+1;r<n;r++) if(Math.abs(a[r][i])>Math.abs(a[p][i])) p=r; [a[i],a[p]]=[a[p],a[i]]; const d=a[i][i]; for(let j=0;j<2*n;j++) a[i][j]/=d;
+    for(let r=0;r<n;r++) if(r!==i){ const k=a[r][i]; for(let j=0;j<2*n;j++) a[r][j]-=k*a[i][j]; } } return a.map(r=>r.slice(n)); }
+function ols(X,y){ const Z=X.map(r=>[1,...r]), p=Z[0].length, XtX=Array.from({length:p},(_,i)=>Array.from({length:p},(_,j)=>sum(Z.map(r=>r[i]*r[j])))), I=inv(XtX);
+  const Xty=Array.from({length:p},(_,i)=>sum(Z.map((r,k)=>r[i]*y[k]))), b=I.map(r=>sum(r.map((v,j)=>v*Xty[j])));
+  const pred=x=>sum([1,...x].map((v,i)=>v*b[i])), res=y.map((v,k)=>v-pred(X[k])), s2=sum(res.map(e=>e*e))/(y.length-p);
+  const sePred=x=>{ const z=[1,...x]; let q=0; for(let i=0;i<p;i++)for(let j=0;j<p;j++)q+=z[i]*I[i][j]*z[j]; return Math.sqrt(s2*(1+q)); };
+  return {b,pred,sePred,df:y.length-p}; }
+
+/* ---------- imputação ---------- */
+const realCols = () => ({bov:[...D.bov],sui:[...D.sui],ave:[...D.ave],ovi:[...D.ovi]});
+function applyMask(m){ const c=realCols(); m.sui.forEach(i=>c.sui[i]=null); m.bov.forEach(i=>c.bov[i]=null); return c; }
+function randMask(r,p){ const m={sui:[],bov:[]}; for(let i=0;i<NT;i++){ if(r()<p)m.sui.push(i); if(r()<p)m.bov.push(i); } return m; }
+const mapCols = (c,fn) => Object.fromEntries(Object.keys(c).map(k=>[k,fn(c[k],k)]));
+const impMedia = c => mapCols(c,a=>{ const m=mean(a.filter(v=>v!=null)); return a.map(v=>v==null?m:v); });
+const impInterp = c => mapCols(c,a=>a.map((v,i)=>{ if(v!=null)return v; let l=i-1,r=i+1; while(l>=0&&a[l]==null)l--; while(r<a.length&&a[r]==null)r++;
+  if(l<0)return a[r]; if(r>=a.length)return a[l]; return a[l]+(a[r]-a[l])*(i-l)/(r-l); }));
+function impKnn(c,k,temporal){ const ks=Object.keys(c), cols=temporal?[A,...ks.map(q=>c[q])]:ks.map(q=>c[q]), nF=cols.length;
+  const mu=cols.map(a=>temporal?mean(a.filter(v=>v!=null)):0), sg=cols.map(a=>temporal?sd(a.filter(v=>v!=null),0):1);
+  const Z=cols.map((a,j)=>a.map(v=>v==null?null:(v-mu[j])/sg[j])), out=Z.map(a=>[...a]);
+  for(let i=0;i<NT;i++) for(let j=0;j<nF;j++){ if(Z[j][i]!=null) continue; const cand=[];
+    for(let r=0;r<NT;r++){ if(r===i||Z[j][r]==null) continue; let s=0,n=0; for(let q=0;q<nF;q++) if(Z[q][i]!=null&&Z[q][r]!=null){ s+=(Z[q][i]-Z[q][r])**2; n++; } if(n) cand.push([Math.sqrt(s*nF/n),Z[j][r]]); }
+    cand.sort((x,y)=>x[0]-y[0]); const nb=cand.slice(0,k);
+    if(temporal){ const z=nb.filter(x=>x[0]===0); out[j][i]= z.length ? mean(z.map(x=>x[1])) : sum(nb.map(x=>x[1]/x[0]))/sum(nb.map(x=>1/x[0])); } else out[j][i]=mean(nb.map(x=>x[1])); }
+  const off=temporal?1:0; return Object.fromEntries(ks.map((q,j)=>[q,out[j+off].map(v=>v*sg[j+off]+mu[j+off])])); }
+const metodos = k => ({'Interpolação linear':impInterp, ['KNN simples (k='+k+')']:c=>impKnn(c,k,false), ['KNN temporal (k='+k+')']:c=>impKnn(c,k,true), 'Média':impMedia});
+function erros(c,imp){ const e=[]; for(const q of ['sui','bov']) c[q].forEach((v,i)=>{ if(v==null) e.push(imp[q][i]-D[q][i]); }); return e; }
+
+/* base de trabalho: cenário do notebook, imputado por interpolação */
+const NB_MASK = {sui:D.maskSui, bov:D.maskBov};
+const P = impInterp(applyMask(NB_MASK));
+const obs = k => P[k].slice(0,OBS), AO = A.slice(0,OBS);
+
+/* ---------- gráficos ---------- */
+const charts = {};
+function mk(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id),cfg); }
+function base(extra={}){ const ink2=css('--ink2'), grid=css('--grid');
+  Chart.defaults.font.family = css('--f-body'); Chart.defaults.font.size = 12; Chart.defaults.color = ink2;
+  return Object.assign({responsive:true,maintainAspectRatio:false,animation:{duration:250},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12,boxHeight:12,usePointStyle:false,padding:14}},tooltip:{callbacks:{}}},
+    scales:{x:{grid:{display:false},border:{color:grid},ticks:{maxRotation:0,autoSkipPadding:14}},y:{grid:{color:grid},border:{display:false}}}},extra); }
+const line = (label,data,color,o={}) => Object.assign({label,data,borderColor:color,backgroundColor:color,borderWidth:2,pointRadius:0,pointHoverRadius:5,tension:0},o);
+const shadePlugin = {id:'shade',beforeDatasetsDraw(ch,_,o){ if(o.from==null) return; const {ctx,chartArea:a,scales:{x}}=ch; const step=x.getPixelForValue(1)-x.getPixelForValue(0), x0=x.getPixelForValue(o.from)-step/2;
+  ctx.save(); ctx.fillStyle=css('--shade'); ctx.fillRect(x0,a.top,a.right-x0,a.bottom-a.top); ctx.fillStyle=css('--ink3'); ctx.font='11px '+css('--f-body'); ctx.textAlign='left'; ctx.fillText('projeção OCDE-FAO',x0+6,a.top+12); ctx.restore(); }};
+const ttKg = {label:c=>` ${c.dataset.label}: ${f(c.parsed.y,2)} kg/hab`};
+
+/* 1. evolução */
+function rEvo(){ const on=k=>$('evo_'+k).checked;
+  const cfg={type:'line',data:{labels:A,datasets:KEYS.filter(on).map(k=>line(NOME[k],D[k],css('--s-'+k)))},options:base(),plugins:[shadePlugin]};
+  cfg.options.plugins.shade={from:OBS}; cfg.options.plugins.tooltip.callbacks=ttKg; cfg.options.scales.y.title={display:true,text:'kg por habitante ao ano'}; cfg.options.scales.y.beginAtZero=true; mk('cEvo',cfg); }
+
+/* 2. imputação */
+let impMask = NB_MASK, impSeed = 1, impNote = 'Cenário do notebook (semente 42).';
+function rImp(){ const k=+$('impK').value, p=+$('impP').value/100; $('impKo').textContent=k; $('impPo').textContent=$('impP').value+'%';
+  const M=metodos(k), names=Object.keys(M), sel=$('impM'), prev=sel.selectedIndex<0?0:sel.selectedIndex;
+  sel.innerHTML=names.map(n=>`<option>${n}</option>`).join(''); sel.selectedIndex=prev;
+  const c=applyMask(impMask), res={}; names.forEach(n=>res[n]=M[n](c));
+  const r=rng(2026), acc=Object.fromEntries(names.map(n=>[n,[]]));
+  for(let s=0;s<200;s++){ const m=randMask(r,p); if(!m.sui.length&&!m.bov.length) continue; const cc=applyMask(m); names.forEach(n=>acc[n].push(rmse(erros(cc,M[n](cc))))); }
+  const rows=names.map(n=>{ const e=erros(c,res[n]); return {n,mae:e.length?mae(e):NaN,rm:e.length?rmse(e):NaN,mc:mean(acc[n])}; }).sort((a,b)=>a.mc-b.mc), mx=Math.max(...rows.map(x=>x.mc));
+  $('tImp').innerHTML='<tr><th>Método</th><th>MAE deste sorteio</th><th>RMSE deste sorteio</th><th>RMSE médio em 200 sorteios</th></tr>'+rows.map((x,i)=>`<tr class="${i?'':'best'}"><td>${x.n}</td><td>${f(x.mae,3)}</td><td>${f(x.rm,3)}</td><td><span class="bar" style="width:${Math.round(70*x.mc/mx)}px"></span>${f(x.mc,3)}</td></tr>`).join('');
+  $('impInfo').textContent=`${impNote} Lacunas: ${impMask.sui.length} em carne suína e ${impMask.bov.length} em bovina. Erros em kg/hab.`;
+  const name=names[sel.selectedIndex], miss=new Set(impMask.sui), pts=(arr)=>A.map((_,i)=>miss.has(i)?arr[i]:null);
+  const cfg={type:'line',data:{labels:A,datasets:[
+    line('Imputado: '+name,pts(res[name].sui),css('--accent'),{showLine:false,pointRadius:5,pointStyle:'rectRot',order:1}),
+    line('Valor verdadeiro apagado',pts(D.sui),css('--ink'),{showLine:false,pointRadius:6,pointStyle:'circle',backgroundColor:'transparent',borderWidth:2,order:2}),
+    line('Série verdadeira',D.sui,css('--neutral'),{order:3})]},options:base()};
+  cfg.options.plugins.tooltip.callbacks=ttKg; cfg.options.plugins.tooltip.filter=i=>i.parsed.y!=null; cfg.options.plugins.legend.labels.usePointStyle=true; cfg.options.scales.y.title={display:true,text:'Carne suína (kg/hab)'}; mk('cImp',cfg); }
+
+/* 3. descritiva */
+function rDesc(){ const all=$('dPer').value==='all', n=all?NT:OBS, order=['bov','sui','ave','ovi'], S=k=>P[k].slice(0,n);
+  $('tDesc').innerHTML='<tr><th>Variável (kg/hab/ano)</th><th>n</th><th>Média</th><th>Mediana</th><th>Desvio padrão</th><th>CV</th><th>Mínimo</th><th>Máximo</th><th>Assimetria</th><th>Variação no período</th></tr>'+
+    order.map(k=>{ const a=S(k); return `<tr><td>${NOME[k]}</td><td>${a.length}</td><td>${f(mean(a))}</td><td>${f(quant(a,.5))}</td><td>${f(sd(a))}</td><td>${pct(sd(a)/mean(a))}</td><td>${f(Math.min(...a))}</td><td>${f(Math.max(...a))}</td><td>${f(skew(a))}</td><td>${(a[n-1]>a[0]?'+':'')+pct(a[n-1]/a[0]-1,0)}</td></tr>`; }).join('');
+  const k=$('dVar').value, a=S(k), lo=Math.min(...a), hi=Math.max(...a), nb=8, w=(hi-lo)/nb, cnt=Array(nb).fill(0); a.forEach(v=>cnt[Math.min(nb-1,Math.floor((v-lo)/w))]++);
+  const dec=k==='ovi'?2:1, cfg={type:'bar',data:{labels:cnt.map((_,i)=>f(lo+i*w,dec)+' a '+f(lo+(i+1)*w,dec)),datasets:[{label:NOME[k],data:cnt,backgroundColor:css('--s-'+k),borderRadius:{topLeft:4,topRight:4},categoryPercentage:.94,barPercentage:1}]},options:base()};
+  cfg.options.plugins.legend.display=false; cfg.options.plugins.tooltip.callbacks={label:c=>` ${c.parsed.y} anos`}; cfg.options.plugins.title={display:true,text:`${NOME[k]}: distribuição dos valores anuais (média ${f(mean(a))}, mediana ${f(quant(a,.5))})`,color:css('--ink'),font:{weight:'600',size:13}};
+  cfg.options.scales.y.title={display:true,text:'Número de anos'}; cfg.options.scales.y.ticks={precision:0}; cfg.options.scales.x.title={display:true,text:'kg/hab/ano'}; mk('cHist',cfg);
+  const isV=$('dCor').value==='var', T=q=>isV?diff(S(q)):S(q); $('corT').textContent='Correlação de Pearson entre '+(isV?'as variações anuais':'os níveis de consumo');
+  const cell=r=>{ const c=css(r>=0?'--pos':'--neg'); return `<td style="background:color-mix(in srgb, ${c} ${Math.round(Math.abs(r)*55)}%, transparent)">${f(r)}</td>`; };
+  $('tCor').innerHTML='<tr><th></th>'+order.map(q=>`<th>${NOME[q]}</th>`).join('')+'</tr>'+order.map(x=>`<tr><td>${NOME[x]}</td>`+order.map(y=>cell(corr(T(x),T(y)))).join('')+'</tr>').join(''); }
+
+/* 4. amostragem */
+const WORLD = Object.entries(D.mundo).map(([p,v])=>v.map(x=>x[1])), FLAT = WORLD.flat(), MU = mean(FLAT);
+function pick(arr,n,r){ const a=[...arr]; for(let i=0;i<n;i++){ const j=i+Math.floor(r()*(a.length-i)); [a[i],a[j]]=[a[j],a[i]]; } return a.slice(0,n); }
+let sSeed = 42;
+function rSamp(){ const fr=+$('sF').value/100; $('sFo').textContent=$('sF').value+'%';
+  const nH=WORLD.map(g=>Math.round(g.length*fr)), n=sum(nH), est=r=>mean(WORLD.flatMap((g,i)=>pick(g,nH[i],r))), aas=r=>mean(pick(FLAT,n,r));
+  const r0=rng(sSeed), e1=est(r0), a1=aas(r0), r=rng(7), E=[], S=[]; for(let i=0;i<1000;i++){ E.push(est(r)); S.push(aas(r)); }
+  const seE=sd(E,0), seS=sd(S,0), bra=mean(obs('sui'));
+  $('sK').innerHTML=[['Média populacional',f(MU,2),`${FLAT.length} registros, ${WORLD.length} países`,0],['Estimativa AAS',f(a1,2),`erro ${a1>MU?'+':''}${f(a1-MU,2)} · n = ${n}`,0],['Estimativa estratificada',f(e1,2),`erro ${e1>MU?'+':''}${f(e1-MU,2)} · n = ${n}`,1],['Erro padrão em 1.000 sorteios',`${f(seS,2)} → ${f(seE,2)}`,`redução de ${pct(1-seE/seS,0)} com a estratificação`,1],['Brasil, média 1990–2016',f(bra,2),'kg/hab/ano',0]]
+    .map(k=>`<div class="kpi ${k[3]?'hl':''}"><b>${k[1]}</b><span>${k[0]}<br>${k[2]}</span></div>`).join('');
+  const lo=Math.min(...S), hi=Math.max(...S), nb=36, w=(hi-lo)/nb, H=a=>{ const c=Array(nb).fill(0); a.forEach(v=>{ const i=Math.floor((v-lo)/w); if(i>=0&&i<=nb) c[Math.min(nb-1,i)]++; }); return c.map(v=>v/10); };
+  const labs=Array.from({length:nb},(_,i)=>f(lo+(i+.5)*w,2));
+  const cfg={type:'line',data:{labels:labs,datasets:[line('Estratificada por país',H(E),css('--s-sui'),{fill:'origin',backgroundColor:css('--accent-soft'),stepped:'middle'}),line('Aleatória simples (AAS)',H(S),css('--neutral'),{stepped:'middle'})]},options:base()};
+  cfg.options.plugins.tooltip.callbacks={title:i=>'Média amostral ≈ '+i[0].label+' kg/hab',label:c=>` ${c.dataset.label}: ${f(c.parsed.y,1)}% dos sorteios`};
+  cfg.options.plugins.title={display:true,text:`Distribuição da média amostral em 1.000 sorteios (média populacional: ${f(MU,2)})`,color:css('--ink'),font:{weight:'600',size:13}};
+  cfg.options.scales.y.title={display:true,text:'% dos sorteios'}; cfg.options.scales.x.title={display:true,text:'Média amostral (kg/hab/ano)'}; mk('cSamp',cfg); }
+
+/* 5. probabilidade */
+function rNorm(){ const L=+$('pL').value; $('pLo').textContent=f(L,1)+' kg/hab'; const a=obs('sui').slice(10), m=mean(a), s=sd(a), p=1-normCdf(L,m,s), emp=a.filter(v=>v>L).length/a.length;
+  $('pK').innerHTML=`<div class="kpi hl"><b>${pct(p,2)}</b><span>P(consumo &gt; ${f(L,1)} kg/hab)</span></div><div class="kpi"><b>${pct(emp,1)}</b><span>frequência observada em 2000–2016</span></div><div class="kpi"><b>${f(m)} ± ${f(s)}</b><span>média e desvio padrão do modelo</span></div>`;
+  const xs=[]; for(let x=m-4*s;x<=m+4*s+1e-9;x+=s/20) xs.push(x); const cv=xs.map(x=>({x,y:normPdf(x,m,s)}));
+  const tail=[{x:L,y:normPdf(L,m,s)},...cv.filter(q=>q.x>L)];
+  const cfg={type:'line',data:{datasets:[line('Normal ajustada',cv,css('--s-sui')),line('Área acima do limite',tail,css('--s-bov'),{fill:'origin',backgroundColor:'color-mix(in srgb, '+css('--s-bov')+' 45%, transparent)',borderWidth:0})]},options:base({parsing:false,interaction:{mode:'nearest',axis:'x',intersect:false}})};
+  cfg.options.scales.x={type:'linear',grid:{display:false},title:{display:true,text:'Consumo de carne suína (kg/hab/ano)'},ticks:{callback:v=>f(v,0)}}; cfg.options.scales.y.title={display:true,text:'Densidade'};
+  cfg.options.plugins.tooltip.callbacks={title:i=>f(i[0].parsed.x,2)+' kg/hab',label:c=>` densidade ${f(c.parsed.y,3)}`}; cfg.options.plugins.tooltip.filter=i=>i.datasetIndex===0; mk('cNorm',cfg); }
+function rBin(){ const n=+$('bN').value; $('bK').max=n; if(+$('bK').value>n) $('bK').value=n; const k=+$('bK').value; $('bNo').textContent=n+' anos'; $('bKo').textContent=k;
+  const d=diff(obs('sui')), p=d.filter(v=>v>0).length/d.length, pm=Array.from({length:n+1},(_,i)=>binom(i,n,p)), pk=sum(pm.slice(k));
+  $('bKp').innerHTML=`<div class="kpi hl"><b>${pct(pk,1)}</b><span>P(ao menos ${k} anos de alta)</span></div><div class="kpi"><b>${pct(pm[n],1)}</b><span>P(alta em todos os ${n} anos)</span></div><div class="kpi"><b>${f(n*p,1)}</b><span>anos de alta esperados (p = ${f(p,3)}, de ${d.filter(v=>v>0).length} altas em ${d.length} anos)</span></div>`;
+  const cfg={type:'bar',data:{labels:pm.map((_,i)=>i),datasets:[{label:'Probabilidade',data:pm.map(v=>v*100),backgroundColor:pm.map((_,i)=>i>=k?css('--s-sui'):css('--neutral')),borderRadius:{topLeft:4,topRight:4},categoryPercentage:.92,barPercentage:1}]},options:base()};
+  cfg.options.plugins.legend.display=false; cfg.options.plugins.tooltip.callbacks={title:i=>i[0].label+' anos de alta',label:c=>` ${f(c.parsed.y,1)}%`};
+  cfg.options.scales.x.title={display:true,text:`Anos com crescimento em ${n} (em azul: ${k} ou mais)`}; cfg.options.scales.y.title={display:true,text:'Probabilidade (%)'}; mk('cBin',cfg); }
+
+/* 6. inferência */
+function rInf(){ const c=+$('iC').value; $('iCo').textContent=c; const s=obs('sui'), g1=s.filter((_,i)=>AO[i]<c), g2=s.filter((_,i)=>AO[i]>=c);
+  const m1=mean(g1), m2=mean(g2), v1=variance(g1)/g1.length, v2=variance(g2)/g2.length, se=Math.sqrt(v1+v2), t=(m2-m1)/se, df=(v1+v2)**2/(v1*v1/(g1.length-1)+v2*v2/(g2.length-1)), p=tP2(t,df), q=tInv(.975,df);
+  $('iK').innerHTML=[[`${f(m1)} → ${f(m2)}`,`média 1990–${c-1} (n = ${g1.length}) e ${c}–2016 (n = ${g2.length}), kg/hab`,0],[f(t,2),`estatística t de Welch, ${f(df,1)} graus de liberdade`,0],[pval(p),'valor-p bilateral',1],[`${f(m2-m1-q*se)} a ${f(m2-m1+q*se)}`,'IC de 95% para a diferença de médias (kg/hab)',1],[p<.05?'Rejeita H0':'Não rejeita H0','decisão com 5% de significância',1]]
+    .map(k=>`<div class="kpi ${k[2]?'hl':''}"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+  const cfg={type:'line',data:{labels:AO,datasets:[line('Carne suína',s,css('--s-sui'),{pointRadius:3}),line(`Média 1990–${c-1}`,AO.map(a=>a<c?m1:null),css('--neutral'),{borderDash:[6,4]}),line(`Média ${c}–2016`,AO.map(a=>a>=c?m2:null),css('--s-bov'),{borderDash:[6,4]})]},options:base()};
+  cfg.options.plugins.tooltip.callbacks=ttKg; cfg.options.plugins.tooltip.filter=i=>i.parsed.y!=null; cfg.options.scales.y.title={display:true,text:'kg/hab/ano'}; mk('cInf',cfg);
+  const pr=(x,y)=>{ const r=corr(x,y), n=x.length; return [r,tP2(r*Math.sqrt((n-2)/(1-r*r)),n-2)]; };
+  $('tCorT').innerHTML='<tr><th>Par de carnes</th><th>r nos níveis</th><th>valor-p</th><th>r nas variações anuais</th><th>valor-p</th><th>Conclusão nas variações</th></tr>'+[['sui','bov'],['sui','ave'],['bov','ave']].map(([a,b])=>{ const [r1,p1]=pr(obs(a),obs(b)), [r2,p2]=pr(diff(obs(a)),diff(obs(b)));
+    return `<tr><td>${NOME[a]} × ${NOME[b]}</td><td>${f(r1)}</td><td>${pval(p1)}</td><td>${f(r2)}</td><td>${f(p2,3)}</td><td>${p2<.05?'significativa':'não significativa'}</td></tr>`; }).join(''); }
+
+/* 7. modelos */
+const MODS = [['M0','Ingênuo: repete o ano anterior',null,'--neutral',1],['M1','Tendência linear (ano)',['ano'],'--s-ave',1],['M2','Bovina e aves do mesmo ano',['bov','ave'],'--s-bov',0],['M3','Carne suína do ano anterior',['suiL'],'--s-sui',1],['M4','Três carnes do ano anterior',['suiL','bovL','aveL'],'--s-ovi',1]];
+const ROWS = AO.slice(1).map((a,i)=>({ano:a,sui:P.sui[i+1],bov:P.bov[i+1],ave:P.ave[i+1],suiL:P.sui[i],bovL:P.bov[i],aveL:P.ave[i]}));
+function rMod(){ const st=+$('mS').value; $('mSo').textContent=st; const alvo=ROWS.filter(r=>r.ano>=st), real=alvo.map(r=>r.sui), prev={};
+  for(const [id,,v] of MODS) prev[id]=alvo.map(te=>{ if(!v) return te.suiL; const tr=ROWS.filter(r=>r.ano<te.ano); return ols(tr.map(r=>v.map(q=>r[q])),tr.map(r=>r.sui)).pred(v.map(q=>te[q])); });
+  const R=MODS.map(m=>({m,rm:rmse(prev[m[0]].map((p,i)=>p-real[i])),ma:mae(prev[m[0]].map((p,i)=>p-real[i]))})), best=[...R].filter(x=>x.m[2]&&x.m[4]).sort((a,b)=>a.rm-b.rm)[0], mx=Math.max(...R.map(x=>x.rm));
+  $('tMod').innerHTML='<tr><th>Modelo</th><th>É previsão de fato?</th><th>MAE</th><th>RMSE (kg/hab)</th></tr>'+[...R].sort((a,b)=>a.rm-b.rm).map(x=>`<tr class="${x===best?'best':''}"><td>${x.m[0]} · ${x.m[1]}</td><td>${x.m[4]?'Sim':'Não'}</td><td>${f(x.ma,3)}</td><td><span class="bar" style="width:${Math.round(60*x.rm/mx)}px"></span>${f(x.rm,3)}</td></tr>`).join('');
+  const ds=[line('Consumo real',real,css('--ink'),{borderWidth:2.5,pointRadius:3})]; for(const m of MODS) if($('mod_'+m[0]).checked) ds.push(line(m[0],prev[m[0]],css(m[3]),{borderDash:m[0]==='M0'?[3,3]:[]}));
+  const cfg={type:'line',data:{labels:alvo.map(r=>r.ano),datasets:ds},options:base()}; cfg.options.plugins.tooltip.callbacks=ttKg; cfg.options.scales.y.title={display:true,text:'Carne suína (kg/hab)'}; cfg.options.scales.x.title={display:true,text:'Ano previsto'}; mk('cMod',cfg);
+  const v=best.m[2], fit=ols(ROWS.map(r=>v.map(q=>r[q])),ROWS.map(r=>r.sui)), last={ano:2017,suiL:P.sui[OBS-1],bovL:P.bov[OBS-1],aveL:P.ave[OBS-1]}, x0=v.map(q=>last[q]), yh=fit.pred(x0), h=tInv(.975,fit.df)*fit.sePred(x0), m0=R[0].rm;
+  $('mK').innerHTML=`<div class="kpi hl"><b>${best.m[0]}</b><span>melhor regressão de previsão: ${best.m[1].toLowerCase()}</span></div><div class="kpi"><b>${f(best.rm,3)} × ${f(m0,3)}</b><span>RMSE do ${best.m[0]} contra o ingênuo (${best.rm<m0?'supera':'não supera'} o M0)</span></div><div class="kpi hl"><b>${f(yh)} kg/hab</b><span>previsão do ${best.m[0]} para 2017, intervalo de 95% de ${f(yh-h)} a ${f(yh+h)}</span></div><div class="kpi"><b>${f(D.sui[OBS])} kg/hab</b><span>projeção OCDE-FAO para 2017</span></div>`; }
+
+/* ---------- montagem ---------- */
+function init(){
+  // No GitHub Pages (usuario.github.io/repositorio), monta o link "Abrir no Colab" a partir do endereço
+  const h=location.hostname, seg=location.pathname.split('/').filter(Boolean);
+  if(h.endsWith('.github.io') && seg.length && !seg[0].endsWith('.html')){ const u=h.split('.')[0], r=seg[0];
+    $('lnkColab').href=`https://colab.research.google.com/github/${u}/${r}/blob/main/Estatistica_Aplicada_Consumo_Carnes_Brasil.ipynb`; $('lnkColab').hidden=false; }
+  const s=obs('sui'), g1=s.slice(0,10), g2=s.slice(10);
+  $('facts').innerHTML=[[`${f(D.sui[0],1)} → ${f(D.sui[OBS-1],1)}`,'kg/hab de carne suína, 1990 e 2016'],['+'+pct(D.sui[OBS-1]/D.sui[0]-1,0),'crescimento do consumo de carne suína'],[`${f(mean(g1),1)} → ${f(mean(g2),1)}`,'média dos anos 1990 e de 2000–2016'],['27 + 10','anos observados e anos projetados']].map(x=>`<div class="fact"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+  $('evoChips').innerHTML=['ave','bov','sui','ovi'].map(k=>`<label class="chip"><input type="checkbox" id="evo_${k}" checked><span class="sw" style="background:var(--s-${k})"></span>${NOME[k]}</label>`).join('');
+  $('mChips').innerHTML=MODS.map(m=>`<label class="chip" title="${m[1]}"><input type="checkbox" id="mod_${m[0]}" ${['M0','M2','M3'].includes(m[0])?'checked':''}><span class="sw" style="background:var(${m[3]})"></span>${m[0]}</label>`).join('');
+  $('dVar').innerHTML=['sui','bov','ave','ovi'].map(k=>`<option value="${k}">${NOME[k]}</option>`).join('');
+  const on=(ids,ev,fn)=>ids.forEach(i=>$(i).addEventListener(ev,fn));
+  on(['evo_sui','evo_bov','evo_ave','evo_ovi'],'change',rEvo);
+  on(['impK','impM'],'input',rImp); $('impP').addEventListener('input',()=>{ impMask=randMask(rng(++impSeed),+$('impP').value/100); impNote='Sorteio da página.'; rImp(); });
+  $('impNew').addEventListener('click',()=>{ impMask=randMask(rng(++impSeed),+$('impP').value/100); impNote='Sorteio da página.'; rImp(); });
+  $('impNb').addEventListener('click',()=>{ impMask=NB_MASK; $('impP').value=10; impNote='Cenário do notebook (semente 42).'; rImp(); });
+  on(['dPer','dVar','dCor'],'change',rDesc); $('sF').addEventListener('input',rSamp); $('sNew').addEventListener('click',()=>{ sSeed++; rSamp(); });
+  $('pL').addEventListener('input',rNorm); on(['bN','bK'],'input',rBin); $('iC').addEventListener('input',rInf);
+  $('mS').addEventListener('input',rMod); on(MODS.map(m=>'mod_'+m[0]),'change',rMod);
+  renderAll();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll);
+  new MutationObserver(renderAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+}
+function renderAll(){ [rEvo,rImp,rDesc,rSamp,rNorm,rBin,rInf,rMod].forEach(fn=>{ try{ fn(); }catch(e){ console.error(e); } }); }
+if (typeof document !== 'undefined') init();
+</script>
+
+</body>
+</html>
